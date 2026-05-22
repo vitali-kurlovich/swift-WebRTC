@@ -216,3 +216,16 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.DS_Store
+
+.gclient
+.gclient_entries
+.gclient_previous_sync_commits
+.gcs_entries
+.cipd
+
+_bad_scm
+depot_tools
+out
+src
