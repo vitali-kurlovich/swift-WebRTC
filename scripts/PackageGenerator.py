@@ -1,4 +1,4 @@
-from scripts.Metadata import Metadata
+from Metadata import Metadata
 
 
 class PackageGenerator:
