@@ -12,7 +12,7 @@ class Git:
             self.logger.error("Files cannot be empty.")
             raise Exception("Files cannot be empty.")
 
-        args = ["git", "add"]
+        args = ["add"]
 
         if isinstance(files, str):
             args.append(files)
@@ -23,13 +23,7 @@ class Git:
             raise Exception("Argument files must be str, list or tuple")
 
         self.logger.info(" ".join(args))
-        process = subprocess.run(args)
-        returncode = process.returncode
-
-        if returncode != 0:
-            self.logger.error(f"Non zero execution result. {returncode}")
-            raise Exception(f"Non zero execution result. {returncode}")
-
+        self._run(args)
         self.logger.info("Add done.")
 
     def commit(self, message: str):
@@ -38,21 +32,7 @@ class Git:
             raise Exception("Message cannot be empty.")
 
         self.logger.info(f"git commit -m {message}")
-        process = subprocess.run(
-            [
-                "git",
-                "commit",
-                "-m",
-                message,
-            ]
-        )
-
-        returncode = process.returncode
-
-        if returncode != 0:
-            self.logger.error(f"Non zero execution result. {returncode}")
-            raise Exception(f"Non zero execution result. {returncode}")
-
+        self._run(["commit", "-m", message])
         self.logger.info("Commit done.")
 
     def push(self, branch: str):
@@ -61,12 +41,14 @@ class Git:
             raise Exception("Branch name cannot be empty.")
 
         self.logger.info(f"git push origin {branch}")
-        process = subprocess.run(["git", "push", "origin", branch])
+        self._run(["push", "origin", branch])
+        self.logger.info("Push done.")
 
+    def _run(self, args: list):
+        cmd = ["git"]
+        cmd.extend(args)
+        process = subprocess.run(cmd)
         returncode = process.returncode
-
         if returncode != 0:
             self.logger.error(f"Non zero execution result. {returncode}")
             raise Exception(f"Non zero execution result. {returncode}")
-
-        self.logger.info("Push done.")
