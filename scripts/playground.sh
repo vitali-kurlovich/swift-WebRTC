@@ -29,4 +29,4 @@ if [ ! -d $SRC_DIR ]; then
     mkdir $SRC_DIR
 fi
 
-python3 -u ./scripts/playground.py
+./scripts/build.sh
