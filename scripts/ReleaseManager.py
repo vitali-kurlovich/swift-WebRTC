@@ -11,6 +11,7 @@ from chromiumdash import ChromiumdashRepository
 from githubapi import GitHubApiRepository
 from Metadata import Metadata
 from PackageGenerator import PackageGenerator
+from template import TemplateBuilder
 
 
 @dataclass
@@ -35,11 +36,11 @@ class ShellException(Exception):
 
 
 class ReleaseManager:
-    def __init__(self, major, patch):
+    def __init__(self, major: str, patch: str):
         super().__init__()
 
         GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-        GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY")
+        GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "vk/webrtc")
 
         self.repo = GITHUB_REPO
         self.major = major
@@ -150,32 +151,31 @@ class ReleaseManager:
 
         return releaseBranch
 
-    def _generatePackage(self, release, metadata, debugmetadata):
-        generator = PackageGenerator(
-            repo=self.repo,
-            major=self.major,
-            minor=release.version,
-            patch=self.patch,
-            metadata=metadata,
-            debugMetadata=debugmetadata,
-        )
+    def _generatePackage(
+        self, release: NextReleaseResult, metadata: Metadata, debugmetadata: Metadata
+    ):
 
-        content = generator.content()
-        self.logger.debug(f"Content for Package.swift: {content}")
-        filepath = f"{self.rootDir}/Package.swift"
+        packageName = self.repo.split("/")[1]
+        tag = f"{self.major}.{release.version}.{self.patch}"
+        baseUrl = f"https://github.com/{self.repo}"
 
-        with open(filepath, "w") as f:
-            f.write(content)
+        url = f"{baseUrl}/releases/download/{tag}/{metadata.filename}"
+        url_debug = f"{baseUrl}/releases/download/{tag}/{debugmetadata.filename}"
 
-        process = subprocess.run(["swiftformat", filepath])
+        template_path = f"{self.rootDir}/templates/Package.swift"
 
-        result = process.returncode
+        builder = TemplateBuilder(template_path)
 
-        if result != 0:
-            raise ShellException(
-                f"swiftformat return non-zero exit code: {result}",
-                result,
-            )
+        builder.append("name", packageName)
+        builder.append("url", url)
+        builder.append("checksum", metadata.checksum)
+
+        builder.append("url_debug", url_debug)
+        builder.append("checksum_debug", debugmetadata.checksum)
+
+        outputPath = f"{self.rootDir}/Package.swift"
+
+        builder.write(outputPath)
 
     def _commitChanges(self, releaseBranch: str, nextRelease: NextReleaseResult):
 
