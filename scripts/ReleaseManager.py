@@ -40,7 +40,7 @@ class ReleaseManager:
         super().__init__()
 
         GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-        GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "vk/webrtc")
+        GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY")
 
         self.repo = GITHUB_REPO
         self.major = major
@@ -154,6 +154,8 @@ class ReleaseManager:
     def _generatePackage(
         self, release: NextReleaseResult, metadata: Metadata, debugmetadata: Metadata
     ):
+        if self.repo is None:
+            raise ReleaseManagerException("GITHUB_REPOSITORY is not set")
 
         packageName = self.repo.split("/")[1]
         tag = f"{self.major}.{release.version}.{self.patch}"
