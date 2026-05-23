@@ -19,14 +19,14 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "WebRTC",
-            url: "https://github.com/vitali-kurlovich/swift-webrtc/releases/download/0.148.0/WebRTC-2026-05-23T16-16-44.xcframework.zip",
-            checksum: "539508f19109c6488b56c237c2e04cfecb37400f3bad9cfcdf572a017aa4e5e5",
+            url: "https://github.com/vitali-kurlovich/swift-webrtc/releases/download/0.148.0/WebRTC-v148.xcframework.zip",
+            checksum: "3cd2dd96f87a50a46e0be28c612598e85593db798cbe50dd670459034631ee72",
         ),
 
         .binaryTarget(
             name: "WebRTCDebug",
-            url: "https://github.com/vitali-kurlovich/swift-webrtc/releases/download/0.148.0/WebRTC-2026-05-23T16-36-03-debug.xcframework.zip",
-            checksum: "4737d05b2d09fc5bdfe2388041f8d8ee79bf0588b762abcda160d6ddf6d0f3b1",
+            url: "https://github.com/vitali-kurlovich/swift-webrtc/releases/download/0.148.0/WebRTC-v148-debug.xcframework.zip",
+            checksum: "02ec1e70aa0900d33e2576241a157b74603fc06c39c1db2dd57fe21b1f86afe3",
         ),
     ],
 )
