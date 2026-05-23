@@ -29,12 +29,4 @@ if [ ! -d $SRC_DIR ]; then
     mkdir $SRC_DIR
 fi
 
-ARTIFACT_DIR="$ROOT_DIR/artifact"
-
-if [ ! -d $ARTIFACT_DIR ]; then
-    echo "ARTIFACT_DIR do not exists"
-    exit 1
-fi
-
-
-cp -r $ARTIFACT_DIR $SRC_DIR
+python3 -u ./scripts/playground.py
