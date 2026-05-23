@@ -77,7 +77,6 @@ class ReleaseManager:
         self.logger.info("Upload asset to github...")
 
         assetName = f"WebRTC-v{nextRelease.version}.xcframework.zip"
-
         assetDebugName = f"WebRTC-v{nextRelease.version}-debug.xcframework.zip"
 
         metadata.assetURL = self._uploadReleaseAsset(
@@ -92,7 +91,9 @@ class ReleaseManager:
         releaseBranch = self._createLocalBranch(nextRelease)
 
         self.logger.info("Update Package.swift")
-        self._generatePackage(nextRelease, metadata, debugmetadata)
+        self._generatePackage(
+            nextRelease, metadata, debugmetadata, assetName, assetDebugName
+        )
 
         self.logger.info("Commiting and pushing code to remote")
         self._commitChanges(releaseBranch, nextRelease)
@@ -152,7 +153,12 @@ class ReleaseManager:
         return releaseBranch
 
     def _generatePackage(
-        self, release: NextReleaseResult, metadata: Metadata, debugmetadata: Metadata
+        self,
+        release: NextReleaseResult,
+        metadata: Metadata,
+        debugmetadata: Metadata,
+        assetName: str,
+        assetDebugName: str,
     ):
         if self.repo is None:
             raise ReleaseManagerException("GITHUB_REPOSITORY is not set")
@@ -161,8 +167,8 @@ class ReleaseManager:
         tag = f"{self.major}.{release.version}.{self.patch}"
         baseUrl = f"https://github.com/{self.repo}"
 
-        url = f"{baseUrl}/releases/download/{tag}/{metadata.filename}"
-        url_debug = f"{baseUrl}/releases/download/{tag}/{debugmetadata.filename}"
+        url = f"{baseUrl}/releases/download/{tag}/{assetName}"
+        url_debug = f"{baseUrl}/releases/download/{tag}/{assetDebugName}"
 
         template_path = f"{self.rootDir}/templates/Package.swift"
 
