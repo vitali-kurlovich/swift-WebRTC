@@ -1,5 +1,10 @@
+from scripts.Metadata import Metadata
+
+
 class PackageGenerator:
-    def __init__(self, repo, major, minor, patch, metadata, debugMetadata):
+    def __init__(
+        self, repo, major, minor, patch, metadata: Metadata, debugMetadata: Metadata
+    ):
         super().__init__()
         self.baseUrl = f"https://github.com/{repo}"
         self.major = major
@@ -10,12 +15,10 @@ class PackageGenerator:
         self.debugMetadata = debugMetadata
 
         self.packageName = repo.split("/")[1]
+        self.tag = f"{major}.{minor}.{patch}"
 
-        if metadata.assetURL is None:
-            raise Exception("assetURL is not set in the metadata")
-
-        if debugMetadata.assetURL is None:
-            raise Exception("assetURL is not set in the debugMetadata")
+    def _downloadURL(self, metadata: Metadata):
+        f"{self.baseUrl}/releases/download/{self.tag}/{metadata.filename}"
 
     def content(self):
         return f"""// swift-tools-version:6.3
@@ -36,13 +39,13 @@ class PackageGenerator:
             targets: [
                 .binaryTarget(
                     name: "WebRTC",
-                    url: "{self.metadata.assetURL}",
+                    url: "{self._downloadURL(self.metadata)}",
                     checksum: "{self.metadata.checksum}"
                 ),
 
                 .binaryTarget(
                     name: "WebRTCDebug",
-                    url: "{self.debugMetadata.assetURL}",
+                    url: "{self._downloadURL(self.debugMetadata)}",
                     checksum: "{self.debugMetadata.checksum}"
                 ),
             ]
