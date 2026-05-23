@@ -21,11 +21,6 @@ jobs:
       - name: Setup Xcode
         run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
 
-      - name: Install swiftformat
-        run: |
-          brew update
-          brew install swiftformat
-
       - name: Install Python
         uses: actions/setup-python@v6
         with:
