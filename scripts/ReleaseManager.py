@@ -5,9 +5,9 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+import git
 import requests
 from chromiumdash import ChromiumdashRepository
-from git import Git
 from githubapi import GitHubApiRepository
 from Metadata import Metadata
 from PackageGenerator import PackageGenerator
@@ -177,12 +177,11 @@ class ReleaseManager:
                 result,
             )
 
-    def _commitChanges(self, releaseBranch, nextRelease):
-        git = Git()
+    def _commitChanges(self, releaseBranch: str, nextRelease: NextReleaseResult):
 
         git.add("Package.swift")
         git.commit(f'"Updated files for release v{nextRelease.version}"')
-        git.push(f"{releaseBranch}")
+        git.push(releaseBranch)
 
     def _pullRequest(self, release, head):
         body = {
