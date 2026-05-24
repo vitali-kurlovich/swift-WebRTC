@@ -11,22 +11,22 @@ The binary releases correspond with official Chromium releases
 
 * All binaries are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) .
 * Dynamic framework contains multiple binaries for macOS and iOS (arm64 only).
-* macOS Catalyst do not support.
+* Do not support macOS Catalyst.
 * All frameworks contain dSYM files for debugging.
 * Added support for extra encodings: VP9, H264, H265
 
 
-## 📢 Requirements
+## Requirements
 * iOS 16+
 * macOS 14+
 
 ## Binaries included
-| **Platform / arch** | arm64  | x86_x64 | Release     | Debug     | 
-|---------------------|--------|---------|-------------|-----------|
-| **iOS (device)**    |   ✅   |   N/A   | %{release}% | %{debug}% |
-| **iOS (simulator)** |   ✅   |   N/A   | %{release}% | %{debug}% |
-| **macOS**           |   ✅   |   N/A   | %{release}% | %{debug}% |
-| **macOS Catalyst**  |   N/A  |   N/A   |     N/A     |    N/A    |
+| **Platform / arch** | arm64  | x86_x64 | --build_config=debug  | 
+|---------------------|--------|---------|-----------------------|
+| **iOS (device)**    |   ✅   |   N/A   | %{build_flag}% | 
+| **iOS (simulator)** |   ✅   |   N/A   | %{build_flag}% | 
+| **macOS**           |   ✅   |   N/A   | %{build_flag}% | 
+| **macOS Catalyst**  |   N/A  |   N/A   |     N/A  |
 
 ### SwiftPM
 
