@@ -96,7 +96,7 @@ class ReleaseManager:
         self._uploadReleaseAsset(self.artifactDir, draft, metadata, assetName)
 
         releaseBranch = self._createLocalBranch(nextRelease)
-        
+
         self._generatePackage(nextRelease, metadata, assetName)
         self._generateReadme(nextRelease)
 
@@ -193,11 +193,9 @@ class ReleaseManager:
         builder.append("tag", tag)
 
         if self.isDebug:
-            builder.append("release", "⛔️")
-            builder.append("debug", "✅")
+            builder.append("build_flag", "✅")
         else:
-            builder.append("release", "✅")
-            builder.append("debug", "⛔️")
+            builder.append("build_flag", "⛔️")
 
         outputPath = f"{self.rootDir}/README.md"
         builder.write(outputPath)
