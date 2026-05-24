@@ -84,7 +84,7 @@ class ReleaseManager:
         metadata = self._buildMetadata(self.artifactDir)
 
         self.logger.info("Creating new release draft...")
-        draft = self._createReleaseDraft(nextRelease, metadata, debugmetadata)
+        draft = self._createReleaseDraft(nextRelease, metadata)
 
         self.logger.info("Upload asset to github...")
 
@@ -96,10 +96,9 @@ class ReleaseManager:
         self._uploadReleaseAsset(self.artifactDir, draft, metadata, assetName)
 
         releaseBranch = self._createLocalBranch(nextRelease)
-        tag = f"{self.major}.{nextRelease.version}.{self.patch}"
-
-        self._generatePackage(nextRelease, tag, metadata, assetName)
-        self._generateReadme(tag)
+        
+        self._generatePackage(nextRelease, metadata, assetName)
+        self._generateReadme(nextRelease)
 
         self._commitChanges(releaseBranch, nextRelease)
 
@@ -107,7 +106,7 @@ class ReleaseManager:
 
         self.logger.info("Done.")
 
-    def _build(self, branch):
+    def _build(self, branch: str):
         os.environ["BRANCH"] = branch
         process = subprocess.run(["sh", "scripts/build.sh"])
         result = process.returncode
@@ -116,33 +115,37 @@ class ReleaseManager:
                 f"Build script return non-zero exit code: {result}", result
             )
 
-    def _createReleaseDraft(self, release, metadata, debugmetadata):
+    def _tagRelease(self, release: NextReleaseResult):
+        return f"{self.major}.{release.version}.{self.patch}"
+
+    def _createReleaseDraft(self, release: NextReleaseResult, metadata: Metadata):
         body = f"Release notes: https://webrtc.googlesource.com/src.git/+log/refs/{metadata.branch}/\n"
         body += f"WebRTC Branch: [{metadata.branch}](https://chromium.googlesource.com/external/webrtc/+log/{metadata.branch})\n"
         body += f"WebRTC Commit: `{metadata.commit}`\n\n"
         body += f"SHA 256 checksum: `{metadata.checksum}`\n"
-        body += f"Debug SHA 256 checksum: `{debugmetadata.checksum}`\n"
+
+        tag = self._tagRelease(release)
 
         fields = {
             "name": f"v{release.version}",
-            "tag_name": f"{self.major}.{release.version}.{self.patch}",
+            "tag_name": tag,
             "draft": True,
             "body": body,
         }
 
         return self.gitHubApi.postReleaseDraft(fields)
 
-    def _uploadReleaseAsset(self, releaseDir, releaseDraft, metadata, assetName):
+    def _uploadReleaseAsset(
+        self, releaseDir: str, releaseDraft, metadata: Metadata, assetName: str
+    ):
         assetPath = os.path.join(releaseDir, metadata.filename)
         uploadURL = releaseDraft["upload_url"]
-        result = self.gitHubApi.uploadReleaseAsset(uploadURL, assetPath, assetName)
+        self.gitHubApi.uploadReleaseAsset(uploadURL, assetPath, assetName)
         self.logger.info(
             f"Successfully created new draft release in github: {releaseDraft['url']}"
         )
 
-        return result["browser_download_url"]
-
-    def _createLocalBranch(self, nextRelease):
+    def _createLocalBranch(self, nextRelease: NextReleaseResult):
         releaseBranch = f"release-v{nextRelease.version}"
         self.logger.info(f"Creating local branch: {releaseBranch}")
         git.checkout(releaseBranch)
@@ -151,7 +154,6 @@ class ReleaseManager:
     def _generatePackage(
         self,
         release: NextReleaseResult,
-        tag: str,
         metadata: Metadata,
         assetName: str,
     ):
@@ -160,6 +162,8 @@ class ReleaseManager:
         packageName = self.repo.split("/")[1]
 
         baseUrl = f"https://github.com/{self.repo}"
+
+        tag = self._tagRelease(release)
 
         url = f"{baseUrl}/releases/download/{tag}/{assetName}"
 
@@ -178,9 +182,11 @@ class ReleaseManager:
 
     def _generateReadme(
         self,
-        tag: str,
+        release: NextReleaseResult,
     ):
         template_path = f"{self.rootDir}/templates/README.md"
+        tag = self._tagRelease(release)
+
         builder = TemplateBuilder(template_path)
 
         builder.append("repo", self.repo)
