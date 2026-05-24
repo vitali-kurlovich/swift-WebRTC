@@ -7,4 +7,3 @@ class Metadata:
     checksum: str
     commit: str
     branch: str
-    assetURL: str | None

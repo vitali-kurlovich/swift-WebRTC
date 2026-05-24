@@ -4,6 +4,14 @@ import subprocess
 _logger = logging.getLogger(__name__)
 
 
+def checkout(branch: str):
+    if len(branch) == 0:
+        _logger.error("Branch name cannot be empty.")
+        raise Exception("Branch name cannot be empty.")
+
+    _run(["checkout", "-b", branch])
+
+
 def add(files):
     if len(files) == 0:
         _logger.error("Files cannot be empty.")

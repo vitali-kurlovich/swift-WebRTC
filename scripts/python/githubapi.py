@@ -42,8 +42,6 @@ class GitHubApiRepository:
         return f"{self.baseUrl}/repos/{self.repo}/pulls"
 
     def requestHeader(self):
-        # "X-GitHub-Api-Version: 2026-03-10"
-
         return {
             "Accept": "application/vnd.github.v3+json",
             "Authorization": f"Bearer {self.token}",

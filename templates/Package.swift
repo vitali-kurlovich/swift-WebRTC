@@ -9,24 +9,13 @@ let package = Package(
         .library(
             name: "WebRTC",
             targets: ["WebRTC"],
-        ),
-
-        .library(
-            name: "WebRTCDebug",
-            targets: ["WebRTCDebug"],
-        ),
+        )
     ],
     targets: [
         .binaryTarget(
             name: "WebRTC",
             url: "%{url}%",
             checksum: "%{checksum}%",
-        ),
-
-        .binaryTarget(
-            name: "WebRTCDebug",
-            url: "%{url_debug}%",
-            checksum: "%{checksum_debug}%",
-        ),
+        )
     ],
 )

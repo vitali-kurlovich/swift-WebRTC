@@ -10,7 +10,6 @@ import requests
 from chromiumdash import ChromiumdashRepository
 from githubapi import GitHubApiRepository
 from Metadata import Metadata
-from PackageGenerator import PackageGenerator
 from template import TemplateBuilder
 
 
@@ -40,7 +39,12 @@ class ReleaseManager:
         super().__init__()
 
         GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+        if GITHUB_TOKEN is None:
+            raise ReleaseManagerException("GITHUB_TOKEN is not set")
+
         GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY")
+        if GITHUB_REPO is None:
+            raise ReleaseManagerException("GITHUB_REPOSITORY is not set")
 
         self.repo = GITHUB_REPO
         self.major = major
@@ -48,14 +52,23 @@ class ReleaseManager:
         self.gitHubApi = GitHubApiRepository(repo=GITHUB_REPO, token=GITHUB_TOKEN)
         self.chromiumDashApi = ChromiumdashRepository()
 
+        self.isDebug = os.environ.get("BUILD_DEBUG") == "1"
+
         self.logger = logging.getLogger(__name__)
 
-        self.rootDir = os.environ.get("ROOT_DIR")
-        self.releaseDir = os.environ.get("OUTPUT_RELEASE_DIR")
-        self.debugDir = os.environ.get("OUTPUT_DEBUG_DIR")
+        rootDir = os.environ.get("ROOT_DIR")
+        if rootDir is None:
+            raise ReleaseManagerException("ROOT_DIR is not set")
+
+        self.rootDir = rootDir
+
+        artifactDir = os.environ.get("OUTPUT_ARTIFACTS_DIR")
+        if artifactDir is None:
+            raise ReleaseManagerException("OUTPUT_ARTIFACTS_DIR is not set")
+
+        self.artifactDir = artifactDir
 
     def run(self):
-        self._raiseCheckEnv()
 
         self.logger.info("Fetch next version...")
         nextRelease = self._getNextRelease()
@@ -68,8 +81,7 @@ class ReleaseManager:
         self._build(nextRelease.branch)
         self.logger.info("WebRTC build successful")
 
-        metadata = self._buildMetadata(self.releaseDir)
-        debugmetadata = self._buildMetadata(self.debugDir)
+        metadata = self._buildMetadata(self.artifactDir)
 
         self.logger.info("Creating new release draft...")
         draft = self._createReleaseDraft(nextRelease, metadata, debugmetadata)
@@ -77,28 +89,20 @@ class ReleaseManager:
         self.logger.info("Upload asset to github...")
 
         assetName = f"WebRTC-v{nextRelease.version}.xcframework.zip"
-        assetDebugName = f"WebRTC-v{nextRelease.version}-debug.xcframework.zip"
 
-        metadata.assetURL = self._uploadReleaseAsset(
-            self.releaseDir, draft, metadata, assetName
-        )
+        if self.isDebug:
+            assetName = f"WebRTC-v{nextRelease.version}-debug.xcframework.zip"
 
-        debugmetadata.assetURL = self._uploadReleaseAsset(
-            self.debugDir, draft, debugmetadata, assetDebugName
-        )
+        self._uploadReleaseAsset(self.artifactDir, draft, metadata, assetName)
 
-        self.logger.info("Create new branch with code changes")
         releaseBranch = self._createLocalBranch(nextRelease)
+        tag = f"{self.major}.{nextRelease.version}.{self.patch}"
 
-        self.logger.info("Update Package.swift")
-        self._generatePackage(
-            nextRelease, metadata, debugmetadata, assetName, assetDebugName
-        )
+        self._generatePackage(nextRelease, tag, metadata, assetName)
+        self._generateReadme(tag)
 
-        self.logger.info("Commiting and pushing code to remote")
         self._commitChanges(releaseBranch, nextRelease)
 
-        self.logger.info("Create Pull Request")
         self._pullRequest(nextRelease, releaseBranch)
 
         self.logger.info("Done.")
@@ -140,35 +144,24 @@ class ReleaseManager:
 
     def _createLocalBranch(self, nextRelease):
         releaseBranch = f"release-v{nextRelease.version}"
-
-        process = subprocess.run(["git", "checkout", "-b", releaseBranch])
-        result = process.returncode
-
-        if result != 0:
-            raise ShellException(
-                f"git checkout return non-zero exit code: {result}", result
-            )
-        self.logger.info("WebRTC build successful.")
-
+        self.logger.info(f"Creating local branch: {releaseBranch}")
+        git.checkout(releaseBranch)
         return releaseBranch
 
     def _generatePackage(
         self,
         release: NextReleaseResult,
+        tag: str,
         metadata: Metadata,
-        debugmetadata: Metadata,
         assetName: str,
-        assetDebugName: str,
     ):
-        if self.repo is None:
-            raise ReleaseManagerException("GITHUB_REPOSITORY is not set")
+        self.logger.info("Update Package.swift")
 
         packageName = self.repo.split("/")[1]
-        tag = f"{self.major}.{release.version}.{self.patch}"
+
         baseUrl = f"https://github.com/{self.repo}"
 
         url = f"{baseUrl}/releases/download/{tag}/{assetName}"
-        url_debug = f"{baseUrl}/releases/download/{tag}/{assetDebugName}"
 
         template_path = f"{self.rootDir}/templates/Package.swift"
 
@@ -178,20 +171,42 @@ class ReleaseManager:
         builder.append("url", url)
         builder.append("checksum", metadata.checksum)
 
-        builder.append("url_debug", url_debug)
-        builder.append("checksum_debug", debugmetadata.checksum)
-
         outputPath = f"{self.rootDir}/Package.swift"
 
         builder.write(outputPath)
+        return outputPath
+
+    def _generateReadme(
+        self,
+        tag: str,
+    ):
+        template_path = f"{self.rootDir}/templates/README.md"
+        builder = TemplateBuilder(template_path)
+
+        builder.append("repo", self.repo)
+        builder.append("tag", tag)
+
+        if self.isDebug:
+            builder.append("release", "⛔️")
+            builder.append("debug", "✅")
+        else:
+            builder.append("release", "✅")
+            builder.append("debug", "⛔️")
+
+        outputPath = f"{self.rootDir}/README.md"
+        builder.write(outputPath)
+        return outputPath
 
     def _commitChanges(self, releaseBranch: str, nextRelease: NextReleaseResult):
-
+        self.logger.info("Commiting and pushing code to remote")
         git.add("Package.swift")
+        git.add("README.md")
         git.commit(f'"Updated files for release v{nextRelease.version}"')
         git.push(releaseBranch)
 
     def _pullRequest(self, release, head):
+        self.logger.info("Create Pull Request")
+
         body = {
             "title": f"Release v{release.version}",
             "head": head,
@@ -200,22 +215,6 @@ class ReleaseManager:
         }
 
         self.gitHubApi.createPullRequest(body)
-
-    def _raiseCheckEnv(self):
-        if self.rootDir is None:
-            raise ReleaseManagerException("ROOT_DIR is not set")
-
-        if self.releaseDir is None:
-            raise ReleaseManagerException("OUTPUT_RELEASE_DIR is not set")
-
-        if self.debugDir is None:
-            raise ReleaseManagerException("OUTPUT_DEBUG_DIR is not set")
-
-        if self.gitHubApi.repo is None:
-            raise ReleaseManagerException("GITHUB_REPO is not set")
-
-        if self.gitHubApi.token is None:
-            raise ReleaseManagerException("GITHUB_TOKEN is not set")
 
     def _getNextRelease(self):
         (latestReleaseVersion, latestReleaseDate) = self.gitHubApi.fetchLastRelease()
@@ -249,7 +248,7 @@ class ReleaseManager:
     def _isReleaseAvailable(self, release):
         return datetime.today() >= (release.releaseDate + timedelta(days=1))
 
-    def _buildMetadata(self, outputDir):
+    def _buildMetadata(self, outputDir: str):
         with open(f"{outputDir}/metadata.json", "r") as f:
             jsonData = json.loads(f.read())
             return Metadata(
@@ -257,5 +256,4 @@ class ReleaseManager:
                 checksum=jsonData["checksum"],
                 commit=jsonData["commit"],
                 branch=jsonData["branch"],
-                assetURL=None,
             )
