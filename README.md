@@ -1,6 +1,6 @@
 # WebRTC Binaries for iOS and macOS
 
-[![Status](https://img.shields.io/github/actions/workflow/status/vitali-kurlovich/swift-webrtc/release)](https://github.com/vitali-kurlovich/swift-webrtc/actions)
+[![WebRTC Release](https://github.com/vitali-kurlovich/swift-webrtc/actions/workflows/release.yml/badge.svg)](https://github.com/vitali-kurlovich/swift-webrtc/actions/workflows/release.yml)
 [![Latest version](https://img.shields.io/github/v/release/vitali-kurlovich/swift-webrtc)](https://github.com/vitali-kurlovich/swift-webrtc/releases)
 [![Release Date](https://img.shields.io/github/release-date/vitali-kurlovich/swift-webrtc)](https://github.com/vitali-kurlovich/swift-webrtc/releases)
 
