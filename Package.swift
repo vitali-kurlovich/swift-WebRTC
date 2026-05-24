@@ -9,24 +9,13 @@ let package = Package(
         .library(
             name: "WebRTC",
             targets: ["WebRTC"],
-        ),
-
-        .library(
-            name: "WebRTCDebug",
-            targets: ["WebRTCDebug"],
-        ),
+        )
     ],
     targets: [
         .binaryTarget(
             name: "WebRTC",
             url: "https://github.com/vitali-kurlovich/swift-webrtc/releases/download/0.148.0/WebRTC-v148.xcframework.zip",
-            checksum: "3cd2dd96f87a50a46e0be28c612598e85593db798cbe50dd670459034631ee72",
-        ),
-
-        .binaryTarget(
-            name: "WebRTCDebug",
-            url: "https://github.com/vitali-kurlovich/swift-webrtc/releases/download/0.148.0/WebRTC-v148-debug.xcframework.zip",
-            checksum: "02ec1e70aa0900d33e2576241a157b74603fc06c39c1db2dd57fe21b1f86afe3",
-        ),
+            checksum: "cdc1a0ec25159aff9bd3f773c46f4a71846e15d433ad4d01c84fdab8f40200b4",
+        )
     ],
 )
