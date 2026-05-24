@@ -23,7 +23,6 @@ if [ -z "$OUTPUT_ARTIFACTS_DIR" ]; then
   exit 1
 fi
 
-
 SRIPTS_DIR="${ROOT_DIR}/scripts"
 BUILD_SCRIPTS_DIR="${SRIPTS_DIR}/ios_macos"
 
@@ -33,7 +32,7 @@ OUTPUT_MACOS_SDK_HEADERS_DIR="${OUTPUT_MACOS_SDK_DIR}/WebRTC.framework/Headers"
 OUTPUT_XCFRAMEWORK_DIR="${OUTPUT_DIR}/WebRTC.xcframework"
 OUTPUT_MACOS_FRAMEWORK_VERSION_DIR="${OUTPUT_XCFRAMEWORK_DIR}/macos-arm64/WebRTC.framework/Versions/A"
 
-# Step 1: Download and install depot tools
+# Download and install depot tools
 if [ ! -d depot_tools ]; then
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 else
@@ -43,7 +42,7 @@ else
 fi
 export PATH=$(pwd)/depot_tools:$PATH
 
-# Step 2 - Download and build WebRTC
+# Download and build WebRTC
 if [ ! -d src ]; then
     fetch --nohooks webrtc_ios
 fi
@@ -57,26 +56,24 @@ cd ..
 gclient sync --with_branch_heads --with_tags
 cd src
 
-# Step 3 - Cleanup output directory
+# Cleanup output directory
 rm -rf $OUTPUT_DIR
 
-# Step 4 - Copy build scripts
+# Copy build scripts
 if [ ! -d ./tools_webrtc/ios_macos ]; then
     cp -r $BUILD_SCRIPTS_DIR ./tools_webrtc
 fi
 
-
 if [ ! -n "$BUILD_DEBUG" ]; then
   echo "Building release..."
 
-# Step 5 - Compile and build all frameworks
+# Compile and build all frameworks
 ./tools_webrtc/ios_macos/build_libs.sh -o $OUTPUT_DIR
-#--build_config=debug
 
 #  Fix Headers in MacOS target
 cp -r $OUTPUT_MACOS_SDK_HEADERS_DIR $OUTPUT_MACOS_FRAMEWORK_VERSION_DIR
 
-# Step 7 - archive the framework
+# Archive the framework
 cd "${OUTPUT_DIR}"
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW.xcframework.zip
@@ -91,7 +88,7 @@ echo "Building debug..."
 # Fix Headers in MacOS target
 cp -r $OUTPUT_MACOS_SDK_HEADERS_DIR $OUTPUT_MACOS_FRAMEWORK_VERSION_DIR
 
-# Step 12 - archive the framework
+# Archive the framework
 cd "${OUTPUT_DIR}"
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW-debug.xcframework.zip
@@ -114,5 +111,4 @@ fi
 mv "${OUTPUT_DIR}/${OUTPUT_NAME}" ${OUTPUT_ARTIFACTS_DIR}
 mv "${OUTPUT_DIR}/metadata.json" ${OUTPUT_ARTIFACTS_DIR}
 
-# Step 10 - Compile and build all frameworks (debug)
 cd $SRC_DIR
