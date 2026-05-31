@@ -1,0 +1,61 @@
+//
+//  Created by Kurlovich Vitali on 5/31/26.
+//
+
+import WebRTC
+
+public struct DataChannelConfiguration: Hashable, Sendable {
+    /** Set to true if ordered delivery is required. */
+    public var isOrdered: Bool
+
+    /**
+     * Max period in milliseconds in which retransmissions will be sent. After this
+     * time, no more retransmissions will be sent. -1 if unset.
+     */
+    public var maxPacketLifeTime: Int32
+
+    /** The max number of retransmissions. -1 if unset. */
+    public var maxRetransmits: Int32
+
+    /** Set to YES if the channel has been externally negotiated and we do not send
+     * an in-band signalling in the form of an "open" message.
+     */
+    public var isNegotiated: Bool
+
+    /** The id of the data channel. */
+    public var channelId: Int32
+
+    public init(isOrdered: Bool, maxPacketLifeTime: Int32, maxRetransmits: Int32, isNegotiated: Bool, channelId: Int32) {
+        self.isOrdered = isOrdered
+        self.maxPacketLifeTime = maxPacketLifeTime
+        self.maxRetransmits = maxRetransmits
+        self.isNegotiated = isNegotiated
+        self.channelId = channelId
+    }
+}
+
+extension DataChannelConfiguration {
+    public init() {
+        let config = RTCDataChannelConfiguration()
+        self.init(config)
+    }
+
+    init(_ config: RTCDataChannelConfiguration) {
+        self.init(isOrdered: config.isOrdered,
+                  maxPacketLifeTime: config.maxPacketLifeTime,
+                  maxRetransmits: config.maxRetransmits,
+                  isNegotiated: config.isNegotiated,
+                  channelId: config.channelId)
+    }
+}
+
+extension RTCDataChannelConfiguration {
+    convenience init(_ config: DataChannelConfiguration) {
+        self.init()
+        isOrdered = config.isOrdered
+        maxPacketLifeTime = config.maxPacketLifeTime
+        maxRetransmits = config.maxRetransmits
+        isNegotiated = config.isNegotiated
+        channelId = config.channelId
+    }
+}

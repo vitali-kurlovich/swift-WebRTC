@@ -4,18 +4,24 @@ import PackageDescription
 
 let package = Package(
     name: "swift-webrtc",
-    platforms: [.iOS(.v16), .macOS(.v14)],
+    platforms: [
+        .macOS(.v14),
+        .iOS(.v17),
+    ],
     products: [
-        .library(
-            name: "WebRTC",
-            targets: ["WebRTC"],
-        )
+        .library(name: "SwiftWebRTC", targets: ["SwiftWebRTC"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/vitali-kurlovich/webrtc.git", from: "0.148.0"),
     ],
     targets: [
-        .binaryTarget(
-            name: "WebRTC",
-            url: "https://github.com/vitali-kurlovich/swift-webrtc/releases/download/0.148.0/WebRTC-v148.xcframework.zip",
-            checksum: "cdc1a0ec25159aff9bd3f773c46f4a71846e15d433ad4d01c84fdab8f40200b4",
-        )
+        // Targets are the basic building blocks of a package, defining a module or a test suite.
+        // Targets can depend on other targets in this package and products from dependencies.
+        .target(
+            name: "SwiftWebRTC",
+            dependencies: [
+                .product(name: "WebRTC", package: "webrtc"),
+            ],
+        ),
     ],
 )

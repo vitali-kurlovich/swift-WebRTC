@@ -1,0 +1,15 @@
+{
+  "originHash" : "095c30e3776f2cd4da49019ad93ad6fd6c9412e138e38a41ed44c90cb821061a",
+  "pins" : [
+    {
+      "identity" : "webrtc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vitali-kurlovich/webrtc.git",
+      "state" : {
+        "revision" : "b787287dce040fe2667682071325d44bb78f5d0a",
+        "version" : "0.148.0"
+      }
+    }
+  ],
+  "version" : 3
+}
