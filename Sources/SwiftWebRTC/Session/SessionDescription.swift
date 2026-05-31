@@ -8,7 +8,7 @@ import WebRTC
  * Represents the session description type. This exposes the same types that are
  * in C++, which doesn't include the rollback type that is in the W3C spec.
  */
-public enum SdpType: Int8, Hashable, CaseIterable, Sendable {
+public enum SdpType: Int8, Hashable, Codable, CaseIterable, Sendable {
     case offer = 0
 
     case prAnswer = 1
@@ -51,7 +51,7 @@ extension RTCSdpType {
     }
 }
 
-public struct SessionDescription: Hashable, Sendable {
+public struct SessionDescription: Hashable, Codable, Sendable {
     /** The type of session description. */
     public let type: SdpType
 

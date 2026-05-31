@@ -5,7 +5,7 @@
 import Observation
 import WebRTC
 
-enum PeerConnectionError: Error {
+public enum PeerConnectionError: Error {
     case cantCreateNewConnection
     case cantCreateNewDataChannel
 }
@@ -55,9 +55,9 @@ public extension PeerConnection {
         try self.init(factory: Self.initializePeerConnectionFactory(), configuration: configuration)
     }
 
-    convenience init(iceServers: [RTCIceServer]) throws {
+    convenience init(iceServers: [IceServer]) throws {
         let configuration = RTCConfiguration()
-        configuration.iceServers = iceServers
+        configuration.iceServers = iceServers.map(\.server)
 
         // Unified plan is more superior than planB
         configuration.sdpSemantics = .unifiedPlan
@@ -108,16 +108,25 @@ public extension PeerConnection {
 public extension PeerConnection {
     // MARK: Signaling
 
-    func offer() async throws -> SessionDescription {
+    func offer(_ options: PeerMediaOption = [.offerToReceiveAudio, .offerToReceiveVideo]) async throws -> SessionDescription {
+        let mediaConstrains = RTCMediaConstraints(mandatoryConstraints: options.dict, optionalConstraints: nil)
         let description = try await peerConnection.offer(for: mediaConstrains)
         try await peerConnection.setLocalDescription(description)
         return .init(description)
     }
 
-    func answer() async throws -> SessionDescription {
+    func answer(_ options: PeerMediaOption = [.offerToReceiveAudio, .offerToReceiveVideo]) async throws -> SessionDescription {
+        let mediaConstrains = RTCMediaConstraints(mandatoryConstraints: options.dict, optionalConstraints: nil)
         let description = try await peerConnection.answer(for: mediaConstrains)
         try await peerConnection.setLocalDescription(description)
         return .init(description)
+    }
+}
+
+public extension PeerConnection {
+    /** Terminate all media and close the transport. */
+    func close() {
+        peerConnection.close()
     }
 }
 
@@ -128,23 +137,17 @@ public extension PeerConnection {
 }
 
 public extension PeerConnection {
-    func add(_ candidate: RTCIceCandidate) async throws {
-        try await peerConnection.add(candidate)
+    func add(_ candidate: IceCandidate) async throws {
+        try await peerConnection.add(.init(candidate))
     }
 
-    func remove(_ candidates: [RTCIceCandidate]) {
+    func remove(_ candidates: [IceCandidate]) {
+        let candidates = candidates.map { RTCIceCandidate($0) }
         peerConnection.remove(candidates)
     }
 }
 
 private extension PeerConnection {
-    var mediaConstrains: RTCMediaConstraints {
-        RTCMediaConstraints(mandatoryConstraints: [
-            kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueTrue,
-            kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueTrue,
-        ], optionalConstraints: nil)
-    }
-
     static func initializePeerConnectionFactory() -> RTCPeerConnectionFactory {
         RTCInitializeSSL()
         let videoEncoderFactory = RTCDefaultVideoEncoderFactory()
